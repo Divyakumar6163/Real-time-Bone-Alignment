@@ -353,6 +353,18 @@ def locate_mechanical_axis(mask):
     )
 
     # ---------------------------------------------------------
+    # ANATOMICAL AXES
+    # ---------------------------------------------------------
+
+    femur_aa = locate_anatomical_axis(
+        femur_mask
+    )
+
+    tibia_aa = locate_anatomical_axis(
+        tibia_mask
+    )
+
+    # ---------------------------------------------------------
     # HKA
     # ---------------------------------------------------------
 
@@ -369,55 +381,206 @@ def locate_mechanical_axis(mask):
         knee_center,
         tibia_center,
         ankle_center,
-        hka
+        hka,
+        femur_aa,
+        tibia_aa
     )
-
 def draw_mechanical_axis(img, mask, img_name=None, save_dir=None):
     '''
-    visualize the segmentation and alignment results
-    :param img: x-ray image
-    :param mask: the predicted RGB mask
-    :param img_name: the name of the img.
-    :param save_dir: the fold to save the results
-    :return:
+    Visualize segmentation, mechanical axes,
+    anatomical axes, landmarks and HKA.
+
+    Mechanical axis  = YELLOW solid line
+    Anatomical axis  = CYAN dashed line
     '''
 
-    femur_head, r, knee_center, tibia_center, ankle_center, hka = locate_mechanical_axis(mask)
+    (
+        femur_head,
+        r,
+        knee_center,
+        tibia_center,
+        ankle_center,
+        hka,
+        femur_aa,
+        tibia_aa
+    ) = locate_mechanical_axis(mask)
+
     mask[:, :, 2] = 0
 
     dpi = 80
+
     height, width, depth = img.shape
-    figsize = width / float(dpi), height / float(dpi)
-    plt.figure(figsize=figsize)
+
+    figsize = (
+        width / float(dpi),
+        height / float(dpi)
+    )
+
+    plt.figure(
+        figsize=figsize
+    )
+
     plt.axis("off")
 
-    # plot image
-    plt.imshow(img)
-    # plot mask
-    plt.imshow(mask, cmap='jet', alpha=0.2)
+    # ---------------------------------------------------------
+    # X-ray image
+    # ---------------------------------------------------------
 
-    # plot femur head center
-    circle = plt.Circle((femur_head[1], femur_head[0]), r, color='y', fill=False)
-    plt.gca().add_patch(circle)
-    plt.plot(femur_head[1], femur_head[0], ",", color="y")
-    # plot femur anatomical axis
-    # plt.plot(femur_aa[1], femur_aa[0], "-",color="y", linewidth=1.0)
-    # plot tibia anatomical axis
-    # plt.plot(tibia_aa[1], tibia_aa[0], "-",color="y", linewidth=1.0)
-    # knee center
-    plt.plot(knee_center[1], knee_center[0], ",", color="y")
-    # tibia center
-    plt.plot(tibia_center[1], tibia_center[0], ",", color="y")
-    # ankle center
-    plt.plot(ankle_center[1], ankle_center[0], ",", color="y")
-    # plot mechanical axis
-    plt.plot([femur_head[1], knee_center[1]], [femur_head[0], knee_center[0]], "-", color="y", linewidth=1.0)
-    plt.plot([tibia_center[1], ankle_center[1]], [tibia_center[0], ankle_center[0]], "-", color="y", linewidth=1.0)
-    plt.text(3, 160, 'HKA = {:.2f}'.format(hka), color='y', size=12)
-    plt.savefig(save_dir + img_name, dpi=dpi, bbox_inches='tight', pad_inches=0.0)
+    plt.imshow(
+        img
+    )
+
+    # ---------------------------------------------------------
+    # Segmentation mask
+    # ---------------------------------------------------------
+
+    plt.imshow(
+        mask,
+        cmap='jet',
+        alpha=0.2
+    )
+
+    # =========================================================
+    # FEMORAL HEAD
+    # =========================================================
+
+    circle = plt.Circle(
+        (
+            femur_head[1],
+            femur_head[0]
+        ),
+        r,
+        color='y',
+        fill=False,
+        linewidth=1.5
+    )
+
+    plt.gca().add_patch(
+        circle
+    )
+
+    plt.plot(
+        femur_head[1],
+        femur_head[0],
+        ",",
+        color="y"
+    )
+
+    # =========================================================
+    # LANDMARKS
+    # =========================================================
+
+    # Knee center
+    plt.plot(
+        knee_center[1],
+        knee_center[0],
+        "o",
+        color="y",
+        markersize=3
+    )
+
+    # Tibia center
+    plt.plot(
+        tibia_center[1],
+        tibia_center[0],
+        "o",
+        color="y",
+        markersize=3
+    )
+
+    # Ankle center
+    plt.plot(
+        ankle_center[1],
+        ankle_center[0],
+        "o",
+        color="y",
+        markersize=3
+    )
+
+    # =========================================================
+    # MECHANICAL AXES
+    # =========================================================
+
+    # Femoral mechanical axis
+    plt.plot(
+        [
+            femur_head[1],
+            knee_center[1]
+        ],
+        [
+            femur_head[0],
+            knee_center[0]
+        ],
+        "-",
+        color="yellow",
+        linewidth=2.0,
+        label="Femoral Mechanical Axis"
+    )
+
+    # Tibial mechanical axis
+    plt.plot(
+        [
+            tibia_center[1],
+            ankle_center[1]
+        ],
+        [
+            tibia_center[0],
+            ankle_center[0]
+        ],
+        "-",
+        color="yellow",
+        linewidth=2.0,
+        label="Tibial Mechanical Axis"
+    )
+
+    # =========================================================
+    # ANATOMICAL AXES
+    # =========================================================
+
+    # Femoral anatomical axis
+    plt.plot(
+        femur_aa[1],
+        femur_aa[0],
+        "--",
+        color="cyan",
+        linewidth=2.0,
+        label="Femoral Anatomical Axis"
+    )
+
+    # Tibial anatomical axis
+    plt.plot(
+        tibia_aa[1],
+        tibia_aa[0],
+        "--",
+        color="cyan",
+        linewidth=2.0,
+        label="Tibial Anatomical Axis"
+    )
+
+    # =========================================================
+    # HKA TEXT
+    # =========================================================
+
+    plt.text(
+        3,
+        160,
+        'HKA = {:.2f}'.format(hka),
+        color='yellow',
+        size=12
+    )
+
+    # =========================================================
+    # SAVE
+    # =========================================================
+
+    plt.savefig(
+        save_dir + img_name,
+        dpi=dpi,
+        bbox_inches='tight',
+        pad_inches=0.0
+    )
+
     plt.close('all')
-    # plt.show()
-
 
 if __name__ == '__main__':
 
